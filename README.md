@@ -109,7 +109,6 @@ This project replaces the original touch control board of a kitchen hood Krona w
 **Features:**
 - Control from Home Assistant (two buttons: On and Off)
 - Emulates original UART commands
-- Flexible command and pause configuration
 - UART signal inversion support
 
 **How it works:**
@@ -125,8 +124,7 @@ This project replaces the original touch control board of a kitchen hood Krona w
 
 **Installation:**
 1. Copy `custom_components/kitchen_hood` to your ESPHome project.
-2. Define byte arrays in your ESPHome config.
-3. Add two buttons in Home Assistant for control.
+2. Add two buttons in Home Assistant for control.
 
 **ESPHome Example:**  
 (see above)
