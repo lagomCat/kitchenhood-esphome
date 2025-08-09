@@ -33,38 +33,71 @@
 ## Пример конфигурации ESPHome
 
 ```yaml
-external_components:
-  - source: github://your-repo/kitchen_hood
+esphome:
+  name: kitchen-hood-emulator
+  friendly_name: "ESP32 Kitchen Hood"
+
+esp32:
+  board: esp32dev
+  framework:
+    type: arduino
+
+wifi:
+  ssid: "Your_SSID"
+  password: "************"
+  manual_ip:
+    static_ip: 192.168.1.17
+    gateway: 192.168.1.1
+    subnet: 255.255.255.0
+  ap:
+    ssid: "ESP32_KitchenHood"
+    password: "**************"
+    
+    
+ota:
+  platform: esphome
+  password: ""
+
+api:
+  encryption:
+    key: kjhkjhkhhkhkhljjljjjkhkhjkjhkjhk=    
 
 uart:
-  id: uart_bus
-  tx_pin: GPIO13
+  tx_pin:
+    number: GPIO13
+    inverted: false
   baud_rate: 500
-  parity: NONE
-  stop_bits: 1
-  rx_inverted: true  # если требуется инверсия
+  id: uart_bus
 
 kitchen_hood:
   uart_id: uart_bus
-  start_sequence: [0xAA, 0xBB, 0xCC, 0xDD, 0xEE]
-  standby_sequence: [0x01, 0x02, 0x03]
-  poweron_sequence: [0x10, 0x20, 0x30]
-  button_poweron_sequence: [0xA1]
-  button_poweroff_sequence: [0xA0]
-  inter_frame_bits: 10
+  
+external_components:
+  - source:
+      type: local
+      path: custom_components
+    components: [kitchen_hood]
+
+logger:    
 
 button:
   - platform: template
-    name: "Вытяжка ВКЛ"
+    name: "Включить вытяжку"
     on_press:
       then:
-        - kitchen_hood.press_power_on
+        - lambda: |-
+            if (kitchen_hood::KitchenHood::instance) {
+              kitchen_hood::KitchenHood::instance->press_power_on();
+            }
+
   - platform: template
-    name: "Вытяжка ВЫКЛ"
+    name: "Выключить вытяжку"
     on_press:
       then:
-        - kitchen_hood.press_power_off
-```
+        - lambda: |-
+            if (kitchen_hood::KitchenHood::instance) {
+              kitchen_hood::KitchenHood::instance->press_power_off();
+            }
 
 ## English
 
