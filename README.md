@@ -97,6 +97,8 @@ button:
             if (kitchen_hood::KitchenHood::instance) {
               kitchen_hood::KitchenHood::instance->press_power_off();
             }
+```
+            
 
 ## English
 
