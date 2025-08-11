@@ -39,6 +39,11 @@
 esphome:
   name: kitchen-hood-emulator
   friendly_name: "ESP32 Kitchen Hood"
+  on_boot:
+    priority: 800
+    then:
+      - lambda: |-
+          WiFi.setSleep(false);
 
 esp32:
   board: esp32dev
@@ -55,6 +60,7 @@ wifi:
   ap:
     ssid: "ESP32_KitchenHood"
     password: "**************"
+  reboot_timeout: 120s      
     
     
 ota:
@@ -64,6 +70,7 @@ ota:
 api:
   encryption:
     key: kjhkjhkhhkhkhljjljjjkhkhjkjhkjhk=  #Your key 
+  reboot_timeout: 0s   
 
 uart:
   tx_pin:
