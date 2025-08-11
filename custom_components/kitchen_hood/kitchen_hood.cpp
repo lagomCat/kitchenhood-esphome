@@ -14,12 +14,18 @@ KitchenHood::KitchenHood(uart::UARTComponent *parent) : uart::UARTDevice(parent)
 
 void KitchenHood::setup() {}
 
-void KitchenHood::press_power_on() { request_poweron_ = true; }
-void KitchenHood::press_power_off() { request_poweroff_ = true; }
+// Обработчики кнопок HA
+void KitchenHood::press_motor_speed(uint8_t speed) {
+  if (speed > 3) return;
+  motor_speed_ = speed;
+  speed_changed_ = true;
+}
 
+void KitchenHood::press_light_on() { light_on_ = true; }
+void KitchenHood::press_light_off() { light_on_ = false; }
+void KitchenHood::press_sound_on() { sound_on_ = true; }
+void KitchenHood::press_sound_off() { sound_on_ = false; }
 
-
-// ====== ОСНОВНОЙ ЦИКЛ ======
 void KitchenHood::loop() {
   switch (state_) {
     case BOOT_SEND:
@@ -39,68 +45,70 @@ void KitchenHood::loop() {
         delay(18);
         boot_repeats_sent_++;
       } else {
-        state_ = STANDBY;
+        state_ = MOTOR_SPEED0; // Начнём с выключенного мотора
       }
       break;
 
-    case STANDBY:
-  // В состоянии STANDBY запрос на выключение — бессмыслен (уже выключены)
-  if (request_poweroff_) {
-    request_poweroff_ = false;
-  }
-
-  if (request_poweron_) {
-        this->send_sequence_with_pauses(header_seq_);
-        this->send_sequence_with_pauses(button_poweron_seq_);
-        delay(18);
-        request_poweron_ = false;
-        state_ = POWERON;
+    default: {
+      // Выбираем состояние в зависимости от motor_speed_ и light_on_
+      State new_state;
+      if (!light_on_) {
+        new_state = static_cast<State>(MOTOR_SPEED0 + motor_speed_);
       } else {
-        this->send_sequence_with_pauses(header_seq_);
-        this->send_sequence_with_pauses(standby_seq_);
-        delay(18);
+        new_state = static_cast<State>(MOTOR_SPEED0_LIGHT + motor_speed_);
       }
-      break;
 
-    case POWERON:
-  // В состоянии POWERON запрос на включение — бессмыслен (уже включены)
-  if (request_poweron_) {
-    request_poweron_ = false;
-  }
+      // Если скорость изменилась — при sound_on_ отправляем код кнопки
+      if (speed_changed_) {
+        if (sound_on_) {
+          this->send_sequence_with_pauses(header_seq_);
+          switch (motor_speed_) {
+            case 0: this->send_sequence_with_pauses(button_motor_speed0_seq_); break;
+            case 1: this->send_sequence_with_pauses(button_motor_speed1_seq_); break;
+            case 2: this->send_sequence_with_pauses(button_motor_speed2_seq_); break;
+            case 3: this->send_sequence_with_pauses(button_motor_speed3_seq_); break;
+          }
+          delay(18);
+        }
+        speed_changed_ = false;
+      }
 
-  if (request_poweroff_) {
-    this->send_sequence_with_pauses(header_seq_);
-    this->send_sequence_with_pauses(button_poweroff_seq_);
-    delay(18);
-    request_poweroff_ = false;
-    state_ = STANDBY;
-  } else {
-    this->send_sequence_with_pauses(header_seq_);
-    this->send_sequence_with_pauses(poweron_seq_);
-    delay(18);
-  }
-  break;
+      // Отправка текущего режима
+      this->send_sequence_with_pauses(header_seq_);
+      switch (new_state) {
+        case MOTOR_SPEED0: this->send_sequence_with_pauses(motor_speed0_seq_); break;
+        case MOTOR_SPEED1: this->send_sequence_with_pauses(motor_speed1_seq_); break;
+        case MOTOR_SPEED2: this->send_sequence_with_pauses(motor_speed2_seq_); break;
+        case MOTOR_SPEED3: this->send_sequence_with_pauses(motor_speed3_seq_); break;
+        case MOTOR_SPEED0_LIGHT: this->send_sequence_with_pauses(motor_speed0_light_seq_); break;
+        case MOTOR_SPEED1_LIGHT: this->send_sequence_with_pauses(motor_speed1_light_seq_); break;
+        case MOTOR_SPEED2_LIGHT: this->send_sequence_with_pauses(motor_speed2_light_seq_); break;
+        case MOTOR_SPEED3_LIGHT: this->send_sequence_with_pauses(motor_speed3_light_seq_); break;
+        default: break;
+      }
+      delay(18);
+
+      state_ = new_state;
+    }
+    break;
   }
 }
 
-void KitchenHood::kitchen_hood_uart_init() {  
+void KitchenHood::kitchen_hood_uart_init() {
   const uart_port_t uart_num = UART_NUM_1;
   uart_set_line_inverse(uart_num, UART_SIGNAL_TXD_INV);
   delayMicroseconds(96);
 }
 
 void KitchenHood::send_sequence_with_pauses(const std::vector<ByteWithPause> &sequence) {
-  for (const auto &byte_pause : sequence) {
-    this->write_byte(byte_pause.first);
+  for (const auto &bp : sequence) {
+    this->write_byte(bp.first);
     this->flush();
-    
-    if (byte_pause.second) {
+    if (bp.second) {
       delayMicroseconds(pause_duration_);
     }
   }
 }
-
-
 
 }  // namespace kitchen_hood
 }  // namespace esphome
