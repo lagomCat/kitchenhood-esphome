@@ -44,7 +44,12 @@ void KitchenHood::loop() {
       break;
 
     case STANDBY:
-      if (request_poweron_) {
+  // В состоянии STANDBY запрос на выключение — бессмыслен (уже выключены)
+  if (request_poweroff_) {
+    request_poweroff_ = false;
+  }
+
+  if (request_poweron_) {
         this->send_sequence_with_pauses(header_seq_);
         this->send_sequence_with_pauses(button_poweron_seq_);
         delay(18);
@@ -58,18 +63,23 @@ void KitchenHood::loop() {
       break;
 
     case POWERON:
-      if (request_poweroff_) {
-        this->send_sequence_with_pauses(header_seq_);
-        this->send_sequence_with_pauses(button_poweroff_seq_);
-        delay(18);
-        request_poweroff_ = false;
-        state_ = STANDBY;
-      } else {
-        this->send_sequence_with_pauses(header_seq_);
-        this->send_sequence_with_pauses(poweron_seq_);
-        delay(18);
-      }
-      break;
+  // В состоянии POWERON запрос на включение — бессмыслен (уже включены)
+  if (request_poweron_) {
+    request_poweron_ = false;
+  }
+
+  if (request_poweroff_) {
+    this->send_sequence_with_pauses(header_seq_);
+    this->send_sequence_with_pauses(button_poweroff_seq_);
+    delay(18);
+    request_poweroff_ = false;
+    state_ = STANDBY;
+  } else {
+    this->send_sequence_with_pauses(header_seq_);
+    this->send_sequence_with_pauses(poweron_seq_);
+    delay(18);
+  }
+  break;
   }
 }
 
