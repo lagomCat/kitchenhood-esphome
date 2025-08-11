@@ -59,7 +59,7 @@ ota:
 
 api:
   encryption:
-    key: kjhkjhkhhkhkhljjljjjkhkhjkjhkjhk=    
+    key: kjhkjhkhhkhkhljjljjjkhkhjkjhkjhk=  #Your key 
 
 uart:
   tx_pin:
@@ -79,23 +79,78 @@ external_components:
 
 logger:    
 
+# Кнопки управления из Home Assistant
 button:
   - platform: template
-    name: "Включить вытяжку"
+    name: "Motor Speed 0"
     on_press:
       then:
         - lambda: |-
             if (kitchen_hood::KitchenHood::instance) {
-              kitchen_hood::KitchenHood::instance->press_power_on();
+              kitchen_hood::KitchenHood::instance->press_motor_speed(0);
             }
 
   - platform: template
-    name: "Выключить вытяжку"
+    name: "Motor Speed 1"
     on_press:
       then:
         - lambda: |-
             if (kitchen_hood::KitchenHood::instance) {
-              kitchen_hood::KitchenHood::instance->press_power_off();
+              kitchen_hood::KitchenHood::instance->press_motor_speed(1);
+            }
+
+  - platform: template
+    name: "Motor Speed 2"
+    on_press:
+      then:
+        - lambda: |-
+            if (kitchen_hood::KitchenHood::instance) {
+              kitchen_hood::KitchenHood::instance->press_motor_speed(2);
+            }
+
+  - platform: template
+    name: "Motor Speed 3"
+    on_press:
+      then:
+        - lambda: |-
+            if (kitchen_hood::KitchenHood::instance) {
+              kitchen_hood::KitchenHood::instance->press_motor_speed(3);
+            }
+
+  - platform: template
+    name: "Light On"
+    on_press:
+      then:
+        - lambda: |-
+            if (kitchen_hood::KitchenHood::instance) {
+              kitchen_hood::KitchenHood::instance->press_light_on();
+            }
+
+  - platform: template
+    name: "Light Off"
+    on_press:
+      then:
+        - lambda: |-
+            if (kitchen_hood::KitchenHood::instance) {
+              kitchen_hood::KitchenHood::instance->press_light_off();
+            }
+
+  - platform: template
+    name: "Sound On"
+    on_press:
+      then:
+        - lambda: |-
+            if (kitchen_hood::KitchenHood::instance) {
+              kitchen_hood::KitchenHood::instance->press_sound_on();
+            }
+
+  - platform: template
+    name: "Sound Off"
+    on_press:
+      then:
+        - lambda: |-
+            if (kitchen_hood::KitchenHood::instance) {
+              kitchen_hood::KitchenHood::instance->press_sound_off();
             }
 ```
             

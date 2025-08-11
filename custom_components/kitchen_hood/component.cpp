@@ -18,7 +18,7 @@ void KitchenHoodComponent::setup() {
   hood->set_start4_sequence({{0x57, false}, {0x55, false}, {0x77, true}, {0x77, true}, {0xF7, false}});
 
   // ------------------------
-  // Массивы состояния (заглушки — заменишь позже)
+  // Массивы состояния
   // ------------------------
   hood->set_motor_speed0_sequence({{0x55, false}, {0xD5, false}, {0x77, true}, {0x77, true}, {0xF7, false}});
   hood->set_motor_speed1_sequence({{0x55, true}, {0xD5, false}, {0x77, true}, {0xDD, false}, {0xF7, false}});
@@ -31,7 +31,7 @@ void KitchenHoodComponent::setup() {
   hood->set_motor_speed3_light_sequence({{0x5D, false}, {0x77, false}, {0x77, false}, {0x77, false}, {0x5D, false}});
 
   // ------------------------
-  // Коды кнопок (заглушки)
+  // Коды кнопок
   // ------------------------
   hood->set_button_motor_speed0_sequence({{0x57, false}, {0x55, false}, {0x77, true}, {0x77, true}, {0xF7, false}});
   hood->set_button_motor_speed1_sequence({{0x57, false}, {0x57, false}, {0xDD, false}, {0xD7, false}, {0x77, false}});
