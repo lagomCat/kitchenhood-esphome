@@ -12,19 +12,36 @@ KitchenHood::KitchenHood(uart::UARTComponent *parent) : uart::UARTDevice(parent)
   instance = this;
 }
 
-void KitchenHood::setup() {}
+void KitchenHood::setup() {
+    // Сразу синхронизируем HA-переключатели при старте
+  if (light_switch_) {
+    light_switch_->publish_state(light_on_);
+  }
+  if (sound_switch_) {
+    sound_switch_->publish_state(sound_on_);
+  }
+}
 
-// Обработчики кнопок HA
+void KitchenHood::set_light(bool on) {
+  light_on_ = on;
+  if (light_switch_) {
+    light_switch_->publish_state(light_on_); // обновляем в HA
+  }
+}
+
+void KitchenHood::set_sound(bool on) {
+  sound_on_ = on;
+  if (sound_switch_) {
+    sound_switch_->publish_state(sound_on_); // обновляем в HA
+  }
+}
+
+// Кнопка выбора скорости (0..3)
 void KitchenHood::press_motor_speed(uint8_t speed) {
   if (speed > 3) return;
   motor_speed_ = speed;
   speed_changed_ = true;
 }
-
-void KitchenHood::press_light_on() { light_on_ = true; }
-void KitchenHood::press_light_off() { light_on_ = false; }
-void KitchenHood::press_sound_on() { sound_on_ = true; }
-void KitchenHood::press_sound_off() { sound_on_ = false; }
 
 void KitchenHood::loop() {
   switch (state_) {
@@ -50,7 +67,7 @@ void KitchenHood::loop() {
       break;
 
     default: {
-      // Выбираем состояние в зависимости от motor_speed_ и light_on_
+      // Выбор нового состояния
       State new_state;
       if (!light_on_) {
         new_state = static_cast<State>(MOTOR_SPEED0 + motor_speed_);
@@ -58,7 +75,7 @@ void KitchenHood::loop() {
         new_state = static_cast<State>(MOTOR_SPEED0_LIGHT + motor_speed_);
       }
 
-      // Если скорость изменилась — при sound_on_ отправляем код кнопки
+      // Если изменилась скорость — при включенном звуке отправляем код кнопки
       if (speed_changed_) {
         if (sound_on_) {
           this->send_sequence_with_pauses(header_seq_);

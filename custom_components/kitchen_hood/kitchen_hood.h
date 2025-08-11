@@ -3,6 +3,7 @@
 #include "esphome/components/uart/uart.h"
 #include <vector>
 #include <utility> // std::pair
+#include "esphome/components/template/switch/template_switch.h"
 
 namespace esphome {
 namespace kitchen_hood {
@@ -26,12 +27,16 @@ class KitchenHood : public Component, public uart::UARTDevice {
   void setup() override;
   void loop() override;
 
-  // Управление из HA
+  // Управление скоростью (кнопки)
   void press_motor_speed(uint8_t speed);
-  void press_light_on();
-  void press_light_off();
-  void press_sound_on();
-  void press_sound_off();
+
+  // Управление подсветкой и звуком (теперь через switch в HA)
+  void set_light(bool on);
+  void set_sound(bool on);
+
+  // Привязка переключателей HA
+  void bind_light_switch(esphome::template_::TemplateSwitch *sw) { light_switch_ = sw; }
+  void bind_sound_switch(esphome::template_::TemplateSwitch *sw) { sound_switch_ = sw; }
 
   void kitchen_hood_uart_init();
 
@@ -92,18 +97,22 @@ class KitchenHood : public Component, public uart::UARTDevice {
   std::vector<ByteWithPause> button_motor_speed3_seq_;
 
   uint32_t pause_duration_ = 4000; // По умолчанию — 2 бита при 500 бод
-
   int boot_repeats_sent_ = 0;
 
-  // Флаги и параметры
+  // Флаги состояния
   bool light_on_ = false;
   bool sound_on_ = false;
   uint8_t motor_speed_ = 0; // 0..3
-  bool speed_changed_ = false; // Чтобы отправить код кнопки один раз
+  bool speed_changed_ = false; // Отправляем код кнопки только при изменении скорости
 
+  // Ссылки на переключатели HA (для обратной синхронизации)
+  esphome::template_::TemplateSwitch *light_switch_ = nullptr;
+  esphome::template_::TemplateSwitch *sound_switch_ = nullptr;
+  
   // Отправка байтов с паузами
   void send_sequence_with_pauses(const std::vector<ByteWithPause> &sequence);
 };
 
 }  // namespace kitchen_hood
 }  // namespace esphome
+
