@@ -2,7 +2,7 @@
 
 ## Описание
 
-Этот проект позволяет заменить штатную сенсорную плату кухонной вытяжки Krona на модуль ESP32 с интеграцией в Home Assistant через ESPHome. Управление вытяжкой осуществляется по UART (500 бод, инвертированный сигнал).
+Этот проект позволяет заменить штатную сенсорную плату кухонной вытяжки KRONA (Модель: SELINA 900 Glass White S) на модуль ESP32 с интеграцией в Home Assistant через ESPHome. Управление вытяжкой осуществляется по UART (500 бод, инвертированный сигнал).
 
 ## Возможности
 
@@ -23,6 +23,10 @@
 
 - ESP32
 - Подключение к основной плате вытяжки по UART через преобразователь логических уровней 3.3 -->> 5 В (без инверсии).
+
+## Проблемы
+
+- В данной реализации не получены коды кнопок переключения скоростей при включенной подсветке. В режиме со включенным звуком нажатия кнопок в поток отправляются коды кнопок, которые были получены при выключенной подсветке. В результате в момент отправки кода кнопки происходит кратковременное выключение подсветки. По всей вероятности, переключение режимов происходит путем  установки определенных битов в пакете байтов по какой-то закономерности, но мне этой закономерности не удалось выявить, поэтому в коде отправляются фиксированные для каждого режима и кнопок наборы байтов. С выключенным звуком проблемы нет, так как код кнопки в поток не отправляется (меняется только код режима). 
 
 ## Установка
 
@@ -159,7 +163,7 @@ button:
 
 ### Kitchen Hood UART Controller (ESPHome + ESP32)
 
-This project replaces the original touch control board of a kitchen hood Krona with an ESP32 module, integrating it into Home Assistant via ESPHome. The hood is controlled via UART (500 baud, inverted signal).
+This project replaces the original touch control board of a kitchen hood KRONA (Model: SELINA 900 Glass White S) with an ESP32 module, integrating it into Home Assistant via ESPHome. The hood is controlled via UART (500 baud, inverted signal).
 
 **Features:**
 - Control from Home Assistant (two buttons: On and Off)
@@ -176,6 +180,9 @@ This project replaces the original touch control board of a kitchen hood Krona w
 **Hardware:**
 - ESP32
 - UART connection to hood mainboard (TX ESP32 -> RX hood, with inversion if needed)
+
+**Issues**
+In this implementation, the button codes for switching speeds with the light on were not obtained. In the mode with the button click sound enabled, the codes of the buttons that were obtained with the light off are sent to the stream. As a result, at the moment of sending the button code, the light turns off briefly. Most likely, mode switching is performed by setting certain bits in the byte packet according to some pattern, but I was not able to determine this pattern, so fixed sets of bytes are sent in the code for each mode and button. With the sound off, there is no problem, since the button code is not sent to the stream (only the mode code changes).
 
 **Installation:**
 1. Copy `custom_components/kitchen_hood` to your ESPHome project.
