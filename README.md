@@ -87,7 +87,7 @@ external_components:
 
 logger:    
 
-# Кнопки управления из Home Assistant
+# Кнопки управления скоростью
 button:
   - platform: template
     name: "Motor Speed 0"
@@ -125,41 +125,35 @@ button:
               kitchen_hood::KitchenHood::instance->press_motor_speed(3);
             }
 
+# Переключатели подсветки и звука
+switch:
   - platform: template
-    name: "Light On"
-    on_press:
-      then:
-        - lambda: |-
-            if (kitchen_hood::KitchenHood::instance) {
-              kitchen_hood::KitchenHood::instance->press_light_on();
-            }
+    name: "Light"
+    id: light_switch
+    turn_on_action:
+      - lambda: |-
+          if (kitchen_hood::KitchenHood::instance) {
+            kitchen_hood::KitchenHood::instance->set_light(true);
+          }
+    turn_off_action:
+      - lambda: |-
+          if (kitchen_hood::KitchenHood::instance) {
+            kitchen_hood::KitchenHood::instance->set_light(false);
+          }
 
   - platform: template
-    name: "Light Off"
-    on_press:
-      then:
-        - lambda: |-
-            if (kitchen_hood::KitchenHood::instance) {
-              kitchen_hood::KitchenHood::instance->press_light_off();
-            }
-
-  - platform: template
-    name: "Sound On"
-    on_press:
-      then:
-        - lambda: |-
-            if (kitchen_hood::KitchenHood::instance) {
-              kitchen_hood::KitchenHood::instance->press_sound_on();
-            }
-
-  - platform: template
-    name: "Sound Off"
-    on_press:
-      then:
-        - lambda: |-
-            if (kitchen_hood::KitchenHood::instance) {
-              kitchen_hood::KitchenHood::instance->press_sound_off();
-            }
+    name: "Sound"
+    id: sound_switch
+    turn_on_action:
+      - lambda: |-
+          if (kitchen_hood::KitchenHood::instance) {
+            kitchen_hood::KitchenHood::instance->set_sound(true);
+          }
+    turn_off_action:
+      - lambda: |-
+          if (kitchen_hood::KitchenHood::instance) {
+            kitchen_hood::KitchenHood::instance->set_sound(false);
+          }
 ```
             
 
