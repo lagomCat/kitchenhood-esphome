@@ -162,40 +162,41 @@ button:
 ```
             
 
-## English
+2. C++ компоненты (custom_components/kitchen_hood/)
+kitchen_hood.h — декларация класса и логики переключений.
 
-### Kitchen Hood UART Controller (ESPHome + ESP32)
+kitchen_hood.cpp — реализация компонентов отправки байтов, состояния и синхронизации с Home Assistant.
 
-This project replaces the original touch control board of a kitchen hood KRONA (Model: SELINA 900 Glass White S) with an ESP32 module, integrating it into Home Assistant via ESPHome. The hood is controlled via UART (500 baud, inverted signal).
+Включены методы: press_motor_speed(), set_light(), set_sound() и синхронизация состояния.
 
-**Features:**
-- Control from Home Assistant (two buttons: On and Off)
-- Emulates original UART commands
-- UART signal inversion support
+3. Хочешь добавить умную Zigbee-кнопку?
+В интерфейсе HA можно создать автоматизацию:
 
-**How it works:**
-1. On power-up, ESP32 sends the start byte sequence twice.
-2. Then, it endlessly sends the standby byte sequence.
-3. When "On" is pressed in HA, after the next standby, it sends the power-on button sequence, then endlessly sends the power-on sequence.
-4. When "Off" is pressed, after the next power-on, it sends the power-off button sequence, then resumes standby loop.
-5. Pauses between frames can be set in multiples of 2 ms (bit duration).
+Single press — выбрать скорости моторa;
 
-**Hardware:**
-- ESP32
-- UART connection to hood mainboard (TX ESP32 -> RX hood, with inversion if needed)
+Long press — включить/выключить подсветку и звук;
 
-**Issues**
-In this implementation, the button codes for switching speeds with the light on were not obtained. In the mode with the button click sound enabled, the codes of the buttons that were obtained with the light off are sent to the stream. As a result, at the moment of sending the button code, the light turns off briefly. Most likely, mode switching is performed by setting certain bits in the byte packet according to some pattern, but I was not able to determine this pattern, so fixed sets of bytes are sent in the code for each mode and button. With the sound off, there is no problem, since the button code is not sent to the stream (only the mode code changes).
+Double press — быстрее перейти на макс. скорость.
 
-**Installation:**
-1. Copy `custom_components/kitchen_hood` to your ESPHome project.
-2. Add two buttons in Home Assistant for control.
+Known Issues / Issues
+В данной реализации не удалось получить корректные коды кнопок переключения скоростей при включённой подсветке.
+В режиме со звуком включён… отправляются коды кнопок, полученные при выключенной подсветке. В результате при отправке кнопки подсветка моргает.
+Видимо, логика переключения режимов зависит от битов, но я не нашёл закономерности, поэтому используем фиксированные наборы байтов.
+При отключённом звуке проблем нет — отправляется только код режима, без кнопки.
 
-**ESPHome Example:**  
-(see above)
+Требования
+Плата ESP32 (например, devboard).
 
----
+Подключение UART TX к линии управления вытяжки (с учётом инверсии).
 
-## Лицензия
+Компонент ESPHome (2012.6.3 или новее).
 
-MIT License
+Home Assistant для управления кнопками и переключателями.
+
+Лицензия
+Этот проект — полностью open source. Ты можешь использовать и модифицировать его под себя. ESPHome же базируется на лицензиях MIT (Python-часть) и GPLv3 (C++), поэтому при публикации прошивки с изменёнными частями логики будь внимателен к правилам лицензирования 
+Reddit
+.
+
+Контакты
+Если что-то не работает или хочется улучшение — открывай issue или пиши в Discussions. Рад будем помочь!
