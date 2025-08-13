@@ -14,7 +14,7 @@
 
 ---
 
-##  Что это умеет
+##  Что умеет данный код:
 
 - **Полностью повторяет UART-сигналы вытяжки**: статусы мотор-режима и подсветки.
 - **Поддержка 8 режимов состояния**: мотор (0–3 скорости) × подсветка (вкл/выкл).
@@ -33,125 +33,208 @@
 ### 1. Настроить `kitchenHood.yaml`:
 
 ```yaml
-esphome:
-  name: kitchen-hood-emulator
-  friendly_name: "ESP32 Kitchen Hood"
-  on_boot:
-    priority: 800
-    then:
-      - lambda: |-
-          WiFi.setSleep(false);
+# ========================================
+# КОНФИГУРАЦИЯ ESPHOME ДЛЯ КУХОННОЙ ВЫТЯЖКИ
+# ========================================
+# Этот файл настраивает ESP32 для управления кухонной вытяжкой
+# через UART протокол с инвертированным сигналом
 
+esphome:
+  # Основное имя устройства в ESPHome
+  name: kitchen-hood-emulator
+  # Дружественное имя для отображения в интерфейсе
+  friendly_name: "ESP32 Kitchen Hood"
+  
+  # Действия при загрузке ESP32
+  on_boot:
+    # Приоритет 800: отключение сна WiFi для стабильной работы
+    - priority: 800
+      then:
+        - lambda: |-
+            WiFi.setSleep(false);
+
+    # Приоритет -100: привязка переключателей Home Assistant к компоненту вытяжки
+    # Выполняется после инициализации всех компонентов
+    - priority: -100
+      then:
+        - lambda: |-
+            if (kitchen_hood::KitchenHood::instance) {
+              // Привязываем переключатель подсветки к компоненту вытяжки
+              kitchen_hood::KitchenHood::instance->bind_light_switch(id(light_switch));
+              // Привязываем переключатель звука к компоненту вытяжки
+              kitchen_hood::KitchenHood::instance->bind_sound_switch(id(sound_switch));
+            }
+
+# ========================================
+# НАСТРОЙКИ ESP32
+# ========================================
 esp32:
+  # Тип платы ESP32
   board: esp32dev
+  # Используем Arduino framework для совместимости
   framework:
     type: arduino
 
+# ========================================
+# НАСТРОЙКИ WI-FI ПОДКЛЮЧЕНИЯ
+# ========================================
 wifi:
-  ssid: "Your_SSID"
-  password: "************"
-  manual_ip:
-    static_ip: 192.168.1.17
-    gateway: 192.168.1.1
-    subnet: 255.255.255.0
-  ap:
-    ssid: "ESP32_KitchenHood"
-    password: "**************"
-  reboot_timeout: 120s      
-    
-    
-ota:
-  platform: esphome
+  # SSID вашей Wi-Fi сети
+  ssid: ""
+  # Пароль от Wi-Fi сети
   password: ""
-
-api:
-  encryption:
-    key: kjhkjhkhhkhkhljjljjjkhkhjkjhkjhk=  #Your key 
-  reboot_timeout: 0s   
-
-uart:
-  tx_pin:
-    number: GPIO13
-    inverted: false
-  baud_rate: 500
-  id: uart_bus
-
-kitchen_hood:
-  uart_id: uart_bus
   
+  # Статический IP адрес для стабильного подключения
+  manual_ip:
+    static_ip: 192.168.*.*      # Фиксированный IP адрес ESP32
+    gateway: 192.168.*.*          # IP адрес роутера (шлюза)
+    subnet: 255.255.255.0           # Маска подсети
+  
+  # Точка доступа для настройки при отсутствии Wi-Fi
+  ap:
+    ssid: "ESP32_KitchenHood"       # Имя точки доступа
+    password: ""           # Пароль точки доступа
+  
+  # Таймаут перезагрузки при проблемах с Wi-Fi (2 минуты)
+  reboot_timeout: 120s    
+
+# ========================================
+# НАСТРОЙКИ OTA (ОБНОВЛЕНИЕ ПО ВОЗДУХУ)
+# ========================================
+ota:
+  platform: esphome                 # Используем ESPHome для OTA
+  password: ""                      # Пароль для OTA (пустой = без пароля)
+
+# ========================================
+# НАСТРОЙКИ API ДЛЯ HOME ASSISTANT
+# ========================================
+api:
+  # Шифрование API для безопасной связи с Home Assistant
+  encryption:
+    key: ***********************************= 
+  # Отключаем таймаут перезагрузки для API
+  reboot_timeout: 0s    
+
+# ========================================
+# НАСТРОЙКИ UART ДЛЯ СВЯЗИ С ВЫТЯЖКОЙ
+# ========================================
+uart:
+  # Пин для передачи данных (TX)
+  tx_pin:
+    number: GPIO13                   # Используем GPIO13 для UART TX
+    inverted: false                  # Инверсия сигнала отключена (управляется в коде)
+  baud_rate: 500                    # Скорость UART: 500 бод
+  id: uart_bus                      # Идентификатор UART шины для компонентов
+
+# ========================================
+# РЕГИСТРАЦИЯ КОМПОНЕНТА КУХОННОЙ ВЫТЯЖКИ
+# ========================================
+# Основной компонент для управления кухонной вытяжкой
+kitchen_hood:
+  uart_id: uart_bus                 # Используем настроенную UART шину
+
+# ========================================
+# ВНЕШНИЕ КОМПОНЕНТЫ
+# ========================================
+# Подключаем кастомный компонент kitchen_hood из локальной папки
 external_components:
   - source:
-      type: local
-      path: custom_components
-    components: [kitchen_hood]
+      type: local                   # Локальный источник компонентов
+      path: custom_components       # Путь к папке с кастомными компонентами
+    components: [kitchen_hood]      # Список подключаемых компонентов
 
+# ========================================
+# НАСТРОЙКИ ЛОГГИРОВАНИЯ
+# ========================================
+# Логгер для отладки и мониторинга работы системы
 logger:    
 
-# Кнопки управления скоростью
+# ========================================
+# КНОПКИ УПРАВЛЕНИЯ СКОРОСТЬЮ МОТОРА
+# ========================================
+# Кнопки для выбора скорости работы кухонной вытяжки
+# Скорость 0 = выключен, 1 = низкая, 2 = средняя, 3 = максимальная
 button:
+  # Кнопка "Мотор выключен" (скорость 0)
   - platform: template
-    name: "Motor Speed 0"
-    on_press:
+    name: "Motor Speed 0"           # Имя кнопки в Home Assistant
+    on_press:                       # Действие при нажатии
       then:
         - lambda: |-
             if (kitchen_hood::KitchenHood::instance) {
+              // Вызываем метод установки скорости 0 (выключен)
               kitchen_hood::KitchenHood::instance->press_motor_speed(0);
             }
 
+  # Кнопка "Низкая скорость" (скорость 1)
   - platform: template
-    name: "Motor Speed 1"
-    on_press:
+    name: "Motor Speed 1"           # Имя кнопки в Home Assistant
+    on_press:                       # Действие при нажатии
       then:
         - lambda: |-
             if (kitchen_hood::KitchenHood::instance) {
+              // Вызываем метод установки скорости 1 (низкая)
               kitchen_hood::KitchenHood::instance->press_motor_speed(1);
             }
 
+  # Кнопка "Средняя скорость" (скорость 2)
   - platform: template
-    name: "Motor Speed 2"
-    on_press:
+    name: "Motor Speed 2"           # Имя кнопки в Home Assistant
+    on_press:                       # Действие при нажатии
       then:
         - lambda: |-
             if (kitchen_hood::KitchenHood::instance) {
+              // Вызываем метод установки скорости 2 (средняя)
               kitchen_hood::KitchenHood::instance->press_motor_speed(2);
             }
 
+  # Кнопка "Максимальная скорость" (скорость 3)
   - platform: template
-    name: "Motor Speed 3"
-    on_press:
+    name: "Motor Speed 3"           # Имя кнопки в Home Assistant
+    on_press:                       # Действие при нажатии
       then:
         - lambda: |-
             if (kitchen_hood::KitchenHood::instance) {
+              // Вызываем метод установки скорости 3 (максимальная)
               kitchen_hood::KitchenHood::instance->press_motor_speed(3);
             }
 
-# Переключатели подсветки и звука
+# ========================================
+# ПЕРЕКЛЮЧАТЕЛИ ПОДСВЕТКИ И ЗВУКА
+# ========================================
+# Переключатели для управления дополнительными функциями вытяжки
 switch:
+  # Переключатель подсветки кухонной вытяжки
   - platform: template
-    name: "Light"
-    id: light_switch
-    turn_on_action:
+    name: "Light"                   # Имя переключателя в Home Assistant
+    id: light_switch                # Уникальный идентификатор для привязки
+    turn_on_action:                 # Действие при включении подсветки
       - lambda: |-
           if (kitchen_hood::KitchenHood::instance) {
+            // Включаем подсветку через компонент вытяжки
             kitchen_hood::KitchenHood::instance->set_light(true);
           }
-    turn_off_action:
+    turn_off_action:                # Действие при выключении подсветки
       - lambda: |-
           if (kitchen_hood::KitchenHood::instance) {
+            // Выключаем подсветку через компонент вытяжки
             kitchen_hood::KitchenHood::instance->set_light(false);
           }
 
+  # Переключатель звукового сопровождения
   - platform: template
-    name: "Sound"
-    id: sound_switch
-    turn_on_action:
+    name: "Sound"                   # Имя переключателя в Home Assistant
+    id: sound_switch                # Уникальный идентификатор для привязки
+    turn_on_action:                 # Действие при включении звука
       - lambda: |-
           if (kitchen_hood::KitchenHood::instance) {
+            // Включаем звуковое сопровождение через компонент вытяжки
             kitchen_hood::KitchenHood::instance->set_sound(true);
           }
-    turn_off_action:
+    turn_off_action:                # Действие при выключении звука
       - lambda: |-
           if (kitchen_hood::KitchenHood::instance) {
+            // Выключаем звуковое сопровождение через компонент вытяжки
             kitchen_hood::KitchenHood::instance->set_sound(false);
           }
 ```
