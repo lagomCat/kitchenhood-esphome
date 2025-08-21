@@ -96,8 +96,7 @@ wifi:
     ssid: "ESP32_KitchenHood"       # Имя точки доступа
     password: ""           # Пароль точки доступа
   
-  fast_connect: true
-  power_save_mode: none 
+  fast_connect: true 
   reboot_timeout: 0s    
   
 # ========================================
