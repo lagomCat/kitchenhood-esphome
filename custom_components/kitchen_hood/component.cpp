@@ -8,9 +8,23 @@ namespace kitchen_hood {
 // Здесь создается экземпляр KitchenHood и настраиваются все UART последовательности
 void KitchenHoodComponent::setup() {
   // Создаем экземпляр класса KitchenHood и регистрируем его в ESPHome
-  auto *hood = new KitchenHood(this->uart_);
-  App.register_component(hood);
+  auto *hood = new KitchenHood(this->uart_);  
   KitchenHood::instance = hood;
+
+  // запускаем отдельный таск, сразу, без ожидания Wi-Fi
+  xTaskCreatePinnedToCore(
+    [](void*) {
+      for (;;) {
+        if (KitchenHood::instance) {
+          KitchenHood::instance->loop_task();
+        }
+        vTaskDelay(pdMS_TO_TICKS(10));
+      }
+    },
+    "hood_loop", 4096, nullptr, 1, nullptr, 1
+  );
+
+  App.register_component(hood);
 
   // ========================================
   // ОБЩИЙ ЗАГОЛОВОК

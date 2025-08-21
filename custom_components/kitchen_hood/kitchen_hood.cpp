@@ -31,19 +31,6 @@ void KitchenHood::setup() {
   if (sound_switch_) {
     sound_switch_->publish_state(sound_on_);
   }
-
-  xTaskCreatePinnedToCore(
-  [](void*) {
-    for (;;) {
-      if (kitchen_hood::KitchenHood::instance) {
-        kitchen_hood::KitchenHood::instance->loop_task();
-      }
-      vTaskDelay(pdMS_TO_TICKS(10));
-    }
-  },
-  "hood_loop", 4096, nullptr, 1, nullptr, 1
-);
-
 }
 
 // Метод для управления подсветкой кухонной вытяжки
