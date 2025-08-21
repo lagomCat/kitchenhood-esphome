@@ -31,6 +31,19 @@ void KitchenHood::setup() {
   if (sound_switch_) {
     sound_switch_->publish_state(sound_on_);
   }
+
+  xTaskCreatePinnedToCore(
+  [](void*) {
+    for (;;) {
+      if (kitchen_hood::KitchenHood::instance) {
+        kitchen_hood::KitchenHood::instance->loop_task();
+      }
+      vTaskDelay(pdMS_TO_TICKS(10));
+    }
+  },
+  "hood_loop", 4096, nullptr, 1, nullptr, 1
+);
+
 }
 
 // Метод для управления подсветкой кухонной вытяжки
@@ -68,7 +81,11 @@ void KitchenHood::press_motor_speed(uint8_t speed) {
 
 // Основной цикл работы компонента
 // Управляет состояниями и отправляет соответствующие UART команды
-void KitchenHood::loop() {
+//Пустой. Будем запускать в отдельном Таске.
+void KitchenHood::loop() {}
+
+
+void KitchenHood::loop_task() {
   switch (state_) {
     case BOOT_SEND:
       // Отправляем последовательности загрузки заданное количество раз
@@ -76,7 +93,7 @@ void KitchenHood::loop() {
         kitchen_hood_uart_init();
         this->send_sequence_with_pauses(header_seq_);
         this->send_sequence_with_pauses(start1_seq_);
-        delay(KitchenHood::FRAME_DELAY); // Используем константу вместо магического числа
+        delay(KitchenHood::FRAME_DELAY);
         this->send_sequence_with_pauses(header_seq_);
         this->send_sequence_with_pauses(start2_seq_);
         delay(KitchenHood::FRAME_DELAY);
@@ -96,10 +113,8 @@ void KitchenHood::loop() {
       // Выбор нового состояния на основе текущих настроек
       State new_state;
       if (!light_on_) {
-        // Если подсветка выключена - используем базовые режимы скорости
         new_state = static_cast<State>(MOTOR_SPEED0 + motor_speed_);
       } else {
-        // Если подсветка включена - используем режимы скорости с подсветкой
         new_state = static_cast<State>(MOTOR_SPEED0_LIGHT + motor_speed_);
       }
 
@@ -138,6 +153,11 @@ void KitchenHood::loop() {
     break;
   }
 }
+
+
+
+
+
 
 // Метод для инициализации UART для работы с кухонной вытяжкой
 // Настраивает специальные параметры UART, необходимые для протокола вытяжки

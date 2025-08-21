@@ -64,7 +64,8 @@ esphome:
               // Привязываем переключатель звука к компоненту вытяжки
               kitchen_hood::KitchenHood::instance->bind_sound_switch(id(sound_switch));
             }
-
+        - logger.log: "Boot completed"
+        
 # ========================================
 # НАСТРОЙКИ ESP32
 # ========================================
@@ -86,8 +87,8 @@ wifi:
   
   # Статический IP адрес для стабильного подключения
   manual_ip:
-    static_ip: 192.168.*.*      # Фиксированный IP адрес ESP32
-    gateway: 192.168.*.*          # IP адрес роутера (шлюза)
+    static_ip: 192.168..      # Фиксированный IP адрес ESP32
+    gateway: 192.168..1          # IP адрес роутера (шлюза)
     subnet: 255.255.255.0           # Маска подсети
   
   # Точка доступа для настройки при отсутствии Wi-Fi
@@ -95,8 +96,19 @@ wifi:
     ssid: "ESP32_KitchenHood"       # Имя точки доступа
     password: ""           # Пароль точки доступа
   
-  # Таймаут перезагрузки при проблемах с Wi-Fi (2 минуты)
-  reboot_timeout: 120s    
+  fast_connect: true
+  power_save_mode: none 
+  reboot_timeout: 0s    
+  
+# ========================================
+# НАСТРОЙКИ API ДЛЯ HOME ASSISTANT
+# ========================================
+api:
+  # Шифрование API для безопасной связи с Home Assistant
+  encryption:
+    key: 
+  # Отключаем таймаут перезагрузки для API
+  reboot_timeout: 0s    
 
 # ========================================
 # НАСТРОЙКИ OTA (ОБНОВЛЕНИЕ ПО ВОЗДУХУ)
@@ -105,15 +117,21 @@ ota:
   platform: esphome                 # Используем ESPHome для OTA
   password: ""                      # Пароль для OTA (пустой = без пароля)
 
+safe_mode:
+  reboot_timeout: 0s   # новый отдельный компонент вместо ota.safe_mode
+  
+
+
 # ========================================
-# НАСТРОЙКИ API ДЛЯ HOME ASSISTANT
-# ========================================
-api:
-  # Шифрование API для безопасной связи с Home Assistant
-  encryption:
-    key: ***********************************= 
-  # Отключаем таймаут перезагрузки для API
-  reboot_timeout: 0s    
+# MQTT
+# ======================================== 
+mqtt:
+  broker: "192.168.."
+  username: 
+  password: 
+  topic_prefix: kitchenhood/esp32
+  discovery: false  # Отключает авто-регистрацию в HA через MQTT
+  reboot_timeout: 0s  
 
 # ========================================
 # НАСТРОЙКИ UART ДЛЯ СВЯЗИ С ВЫТЯЖКОЙ
@@ -123,7 +141,7 @@ uart:
   tx_pin:
     number: GPIO13                   # Используем GPIO13 для UART TX
     inverted: false                  # Инверсия сигнала отключена (управляется в коде)
-  baud_rate: 500                    # Скорость UART: 500 бод
+  baud_rate: 500                    # Скорость UART: 500 бод (медленно, но надежно)
   id: uart_bus                      # Идентификатор UART шины для компонентов
 
 # ========================================
@@ -147,7 +165,33 @@ external_components:
 # НАСТРОЙКИ ЛОГГИРОВАНИЯ
 # ========================================
 # Логгер для отладки и мониторинга работы системы
-logger:    
+logger:
+  level: DEBUG    
+
+# ========================================
+# ПОДКЛЮЧЕНИЕ ШИНЫ i2c
+# ========================================
+i2c:
+  sda: GPIO21
+  scl: GPIO22
+  scan: true
+  id: bus_a
+  
+  
+sensor:
+
+  - platform: htu21d
+    model: htu21d
+    i2c_id: bus_a
+    address: 0x40
+    temperature:
+      name: "SHT21 Temperature"
+      accuracy_decimals: 2
+    humidity:
+      name: "SHT21 Humidity"
+      accuracy_decimals: 2
+    update_interval: 5s     
+
 
 # ========================================
 # КНОПКИ УПРАВЛЕНИЯ СКОРОСТЬЮ МОТОРА

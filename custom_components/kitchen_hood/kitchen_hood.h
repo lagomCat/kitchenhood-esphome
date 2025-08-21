@@ -38,6 +38,8 @@ namespace kitchen_hood {
     
     explicit KitchenHood(uart::UARTComponent *parent);
 
+  void loop_task();
+
   void setup() override;
   void loop() override;
 
