@@ -133,7 +133,7 @@ void KitchenHood::loop_task() {
         case MOTOR_SPEED3_LIGHT: this->send_sequence_with_pauses(motor_speed3_light_seq_); break;
         default: break;
       }
-      delay(KitchenHood::FRAME_DELAY);
+      delay(KitchenHood::FRAME_DELAY-10);
 
       state_ = new_state;
     }
